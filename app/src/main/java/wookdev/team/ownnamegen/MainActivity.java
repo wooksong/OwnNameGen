@@ -2,6 +2,7 @@ package wookdev.team.ownnamegen;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -38,6 +39,8 @@ import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
+    public static final String EXTRA_KEY_KR_NAME = "only_name_kr";
+    public static final String EXTRA_KEY_CH_FAMILY_NAME = "fam_name_ch";
     private static final int MAX_LEN_NAME = 3;
     private static final int POS_FAMILY_NAME = 0;
     private static final int FIVE_ELE_TREE = 0;
@@ -638,6 +641,16 @@ public class MainActivity extends AppCompatActivity {
         resultNames_autoCompleteTV.setAdapter(resultNames_autoCompleteTVAdapter);
         resultNames_autoCompleteTV.addTextChangedListener(textChecker2);
         resultNames_autoCompleteTV.setFilters(new InputFilter[]{new InputFilter.LengthFilter(name_len)});
+        resultNames_autoCompleteTV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(MainActivity.this, Main2Activity.class);
+                intent.putExtra(EXTRA_KEY_KR_NAME, resultNames_autoCompleteTVAdapter.getItem(position));
+                intent.putExtra(EXTRA_KEY_CH_FAMILY_NAME, ownName.get(POS_FAMILY_NAME).getChLetter());
+                startActivity(intent);
+            }
+        });
+
 
     }
 
