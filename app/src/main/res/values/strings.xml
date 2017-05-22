@@ -4,6 +4,7 @@
     <string name="FamilyName_kr">성</string>
     <string name="BirthDate">생년월일</string>
     <string name="BirthTime">탄생시간</string>
+    <string name="BirthLocation">탄생지역</string>
     <string name="BirthTitle">생년월일시(生年月日時)</string>
     <string name="NameType">이름 유형</string>
     <string name="NameType1">외자 이름</string>
@@ -15,6 +16,5 @@
     <string name="ProOptionFiveEle_first">초성 오행 상생 평가 적용</string>
     <string name="ProOptionFiveEle_firstlast">초성과 종성 오행 상생 평가 적용</string>
     <string name="ProOptionFiveEle_firstOrlast">오행 상생 평가 모두 포함</string>
-
 </resources>
 

@@ -2,11 +2,13 @@ package wookdev.team.ownnamegen;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
@@ -34,6 +36,7 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -41,6 +44,12 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     public static final String EXTRA_KEY_KR_NAME = "only_name_kr";
     public static final String EXTRA_KEY_CH_FAMILY_NAME = "fam_name_ch";
+    public static final String EXTRA_KEY_BIRTH_YEAR = "birth_year";
+    public static final String EXTRA_KEY_BIRTH_MONTH = "birth_month";
+    public static final String EXTRA_KEY_BIRTH_DAY = "birth_day";
+    public static final String EXTRA_KEY_BIRTH_HOUR = "birth_hour";
+    public static final String EXTRA_KEY_BIRTH_MINUTE = "birth_minute";
+    public static final String EXTRA_KEY_BIRTH_LOCATION = "birth_location";
     private static final int MAX_LEN_NAME = 3;
     private static final int POS_FAMILY_NAME = 0;
     private static final int FIVE_ELE_TREE = 0;
@@ -79,42 +88,13 @@ public class MainActivity extends AppCompatActivity {
 
     private ArrayList<String> PRO_YANG_KR_ARRAYLIST = new ArrayList<String>(Arrays.asList(PRO_YANG));
     private ArrayList<String> PRO_YIN_KR_ARRAYLIST = new ArrayList<String>(Arrays.asList(PRO_YIN));;
-    /*
-    private ArrayList<String> FIVE_ELE_TREE_KR_ARRAYLIST = new ArrayList<String>(Arrays.asList(FIVE_ELE_TREE_KR_ARRAY));
-    private ArrayList<String> FIVE_ELE_FIRE_KR_ARRAYLIST = new ArrayList<String>(Arrays.asList(FIVE_ELE_FIRE_KR_ARRAY));
-    private ArrayList<String> FIVE_ELE_SOIL_KR_ARRAYLIST = new ArrayList<String>(Arrays.asList(FIVE_ELE_SOIL_KR_ARRAY));
-    private ArrayList<String> FIVE_ELE_METAL_KR_ARRAYLIST = new ArrayList<String>(Arrays.asList(FIVE_ELE_METAL_KR_ARRAY));
-    private ArrayList<String> FIVE_ELE_WATER_KR_ARRAYLIST = new ArrayList<String>(Arrays.asList(FIVE_ELE_WATER_KR_ARRAY));
-    */
+
     private ArrayList<String> FIVE_ELE_TREE_KR_ARRAYLIST;
     private ArrayList<String> FIVE_ELE_FIRE_KR_ARRAYLIST;
     private ArrayList<String> FIVE_ELE_SOIL_KR_ARRAYLIST;
     private ArrayList<String> FIVE_ELE_METAL_KR_ARRAYLIST;
     private ArrayList<String> FIVE_ELE_WATER_KR_ARRAYLIST;
 
-    private static final String[] FIVE_ELE_BEST_COMBI3_ARRAY = {
-            "목목수", "목목화", "목수목", "목수수", "목화목", "목화화", "목화토", "목수금",
-            "화목목", "화목수", "화목화", "화화목", "화화토", "화토금", "화토화", "화토토",
-            "토금금", "토금토", "토금수", "토화목", "토화화", "토화토", "토토금", "토토화",
-            "금금수", "금금토", "금수금", "금수목", "금수수", "금토금", "금토화", "금토토",
-            "수금금", "수금수", "수금토", "수목목", "수목수", "수목화", "수수금", "수수목",
-    };
-
-    /*
-    private static final String[] FIVE_ELE_BEST_COMBI3_ARRAY = {
-            "목목수", "목목화", "목수목", "목수수", "목화목", "목화화", "목화토", "목수금",
-            "화목목", "화목수", "화목화", "화화목", "화화토", "화토금", "화토화", "화토토",
-            "토금금", "토금토", "토금수", "토화목", "토화화", "토화토", "토토금", "토토화",
-            "금금수", "금금토", "금수금", "금수목", "금수수", "금토금", "금토화", "금토토",
-            "수금금", "수금수", "수금토", "수목목", "수목수", "수목화", "수수금", "수수목",
-    };
-
-
-    private static final String[] FIVE_ELE_FIRE_KR_ARRAY = {"ㄴ", "ㄷ","ㄹ","ㅌ"};
-    private static final String[] FIVE_ELE_SOIL_KR_ARRAY = {"ㅇ", "ㅎ"};
-    private static final String[] FIVE_ELE_METAL_KR_ARRAY = {"ㅅ", "ㅈ","ㅊ"};
-    private static final String[] FIVE_ELE_WATER_KR_ARRAY = {"ㅁ", "ㅂ","ㅍ"};
-    */
     private int name_len;
     private AutoCompleteTextView fn_autoCompleteTV;
     private Spinner fn_spinner;
@@ -122,6 +102,8 @@ public class MainActivity extends AppCompatActivity {
     private ArrayAdapter<String> fn_spinnerAdapter;
     private Button birth_DateButton;
     private Button birth_TimeButton;
+    private Button birth_LocationButton;
+    private ArrayAdapter<String> birthLocationButton_ArrayAdapter;
 
     private RadioGroup nametype_RadioGroup;
     private RadioButton nametype_RadioButton1;
@@ -154,6 +136,12 @@ public class MainActivity extends AppCompatActivity {
     private boolean pro_option_five_ele_firstlast = false;
     private boolean pro_option_five_ele_firstorlast = false;
 
+    private int saju_year;
+    private int saju_month;
+    private int saju_day;
+    private int saju_hour;
+    private int saju_minute;
+    private String saju_location;
 
     /**
      * 초성
@@ -172,6 +160,15 @@ public class MainActivity extends AppCompatActivity {
     private static final char[] lastSounds = {' ', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ',
             'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ',
             'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'};
+
+    private static final String[] locations = {
+            "목포", "서산", "제주", "보령", "서귀포", "인천", "군산",
+            "정읍", "광주", "서울", "수원", "평택", "전주",
+            "천안", "남원", "대전", "청주", "춘천", "여수", "충주",
+            "원주", "사천", "김천", "상주", "통영", "마산", "속초",
+            "대구", "안동", "강릉", "태백", "부산", "동해", "경주",
+            "울산", "포항", "울진"
+    };
 
 
 
@@ -270,18 +267,14 @@ public class MainActivity extends AppCompatActivity {
                               int dayOfMonth) {
             // TODO Auto-generated method stub
             // getCalender();
-            int mYear = year;
-            int mMonth = monthOfYear;
-            int mDay = dayOfMonth;
-            Log.d(TAG,mYear + " " + mMonth +  " " + mDay );
-            /*
-            v.setText(new StringBuilder()
-                    // Month is 0 based so add 1
-                    .append(mMonth + 1).append("/").append(mDay).append("/")
-                    .append(mYear).append(" "));
-            System.out.println(v.getText().toString());
-            */
+            saju_year = year;
+            saju_month = monthOfYear + 1;
+            saju_day = dayOfMonth;
 
+            birth_DateButton.setText(new StringBuilder()
+                    // Month is 0 based so add 1
+                    .append(saju_year).append("년 ").append(saju_month).append("월 ")
+                    .append(saju_day).append("일"));
         }
     }
 
@@ -294,6 +287,8 @@ public class MainActivity extends AppCompatActivity {
             birth_DateButton.setClickable(flag);
             birth_TimeButton.setEnabled(flag);
             birth_TimeButton.setClickable(flag);
+            birth_LocationButton.setEnabled(flag);
+            birth_LocationButton.setClickable(flag);
             nametype_RadioButton1.setClickable(flag);
             nametype_RadioButton1.setEnabled(flag);
             nametype_RadioButton2.setClickable(flag);
@@ -430,6 +425,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        saju_year = -1;
+        saju_month = -1;
+        saju_day = -1;
+        saju_hour = -1;
+        saju_minute = -1;
+        saju_location = getString(R.string.BirthLocation);
+
         ownName = new ArrayList<Letter>(MAX_LEN_NAME);
         FIVE_ELE_TREE_KR_ARRAYLIST = new ArrayList<String>(Arrays.asList(FIVE_ELE_TREE_KR_ARRAY));
         FIVE_ELE_FIRE_KR_ARRAYLIST = new ArrayList<String>(Arrays.asList(FIVE_ELE_FIRE_KR_ARRAY));
@@ -441,17 +443,6 @@ public class MainActivity extends AppCompatActivity {
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        /*
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-        */
 
         dbManager = new DBManager(this);
         fn_spinner = (Spinner) findViewById(R.id.FamilyNameSpinner);
@@ -529,37 +520,54 @@ public class MainActivity extends AppCompatActivity {
                 int mYear = c.get(Calendar.YEAR);
                 int mMonth = c.get(Calendar.MONTH);
                 int mDay = c.get(Calendar.DAY_OF_MONTH);
-                System.out.println("the selected " + mDay);
                 DatePickerDialog dialog = new DatePickerDialog(MainActivity.this,
                         new mDateSetListener(), mYear, mMonth, mDay);
                 dialog.show();
             }
         });
-
         birth_TimeButton.setOnClickListener(new View.OnClickListener() {
             private TimePickerDialog.OnTimeSetListener listener = new TimePickerDialog.OnTimeSetListener() {
                 @Override
                 public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                    Toast.makeText(getApplicationContext(), hourOfDay + "시 " + minute + "분", Toast.LENGTH_SHORT).show();
+                    saju_hour = hourOfDay;
+                    saju_minute = minute;
+                    birth_TimeButton.setText(saju_hour + ":" + saju_minute);
                 }
             };
             @Override
             public void onClick(View v) {
-                /*
-                Calendar c = Calendar.getInstance();
-
-                int mYear = c.get(Calendar.YEAR);
-                int mMonth = c.get(Calendar.MONTH);
-                int mDay = c.get(Calendar.DAY_OF_MONTH);
-                System.out.println("the selected " + mDay);
-                */
-
-
 
                 TimePickerDialog dialog = new TimePickerDialog(MainActivity.this,
                         listener, 15, 24, false);
 
                 dialog.show();
+            }
+        });
+        birth_LocationButton = (Button) findViewById(R.id.birthLocationButton);
+        birthLocationButton_ArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, locations);
+        birthLocationButton_ArrayAdapter.sort(new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                int compare = o1.compareTo(o2);
+                return compare;
+            }
+        });
+        birth_LocationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle(R.string.BirthLocation)
+                        .setAdapter(birthLocationButton_ArrayAdapter, new DialogInterface.OnClickListener() {
+
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // TODO: user specific action
+                                saju_location = locations[which];
+                                birth_LocationButton.setText(saju_location);
+                                dialog.dismiss();
+                            }
+                        }).create().show();
+                //birth_LocationButton.setText(saju_location);
             }
         });
 
@@ -644,14 +652,28 @@ public class MainActivity extends AppCompatActivity {
         resultNames_autoCompleteTV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(MainActivity.this, Main2Activity.class);
-                intent.putExtra(EXTRA_KEY_KR_NAME, resultNames_autoCompleteTVAdapter.getItem(position));
-                intent.putExtra(EXTRA_KEY_CH_FAMILY_NAME, ownName.get(POS_FAMILY_NAME).getChLetter());
-                startActivity(intent);
+
+                if ((saju_year == -1) || (saju_month == -1) || (saju_day == -1)) {
+                    Toast.makeText(MainActivity.this, "생년월일을 입력하세요.",Toast.LENGTH_LONG).show();
+                } else if ((saju_hour == -1) || (saju_minute == -1)) {
+                    Toast.makeText(MainActivity.this, "탄생시각을 입력하세요.",Toast.LENGTH_LONG).show();
+                } else if (saju_location == getString(R.string.BirthLocation)) {
+                    Toast.makeText(MainActivity.this, "탄생지역을 입력하세요.",Toast.LENGTH_LONG).show();
+                } else {
+                    Intent intent = new Intent(MainActivity.this, Main2Activity.class);
+                    intent.putExtra(EXTRA_KEY_KR_NAME, resultNames_autoCompleteTVAdapter.getItem(position));
+                    intent.putExtra(EXTRA_KEY_CH_FAMILY_NAME, ownName.get(POS_FAMILY_NAME).getChLetter());
+                    intent.putExtra(EXTRA_KEY_BIRTH_YEAR, ""+saju_year);
+                    intent.putExtra(EXTRA_KEY_BIRTH_MONTH, ""+saju_month);
+                    intent.putExtra(EXTRA_KEY_BIRTH_DAY, ""+saju_day);
+                    intent.putExtra(EXTRA_KEY_BIRTH_HOUR, ""+saju_hour);
+                    intent.putExtra(EXTRA_KEY_BIRTH_MINUTE, ""+saju_minute);
+                    intent.putExtra(EXTRA_KEY_BIRTH_LOCATION, saju_location);
+
+                    startActivity(intent);
+                }
             }
         });
-
-
     }
 
     private int consonant_to_fiveele(String consonant) {
