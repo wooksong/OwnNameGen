@@ -14,6 +14,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -168,6 +169,27 @@ public class DBManager {
         return  resultArrayList;
     }
 
+    public ArrayList<Letter> getLetter(String nameKr) {
+
+        String sql = "select * from " + DB_CH_TABLE_NAME + " where Hangul = '"+ nameKr +"' and Position = 1;";
+        ArrayList<Letter> resultArrayList = new ArrayList<Letter>();
+        Cursor result = db_ch.rawQuery(sql, null);
+
+        // result(Cursor 객체)가 비어 있으면 false 리턴
+        if(result.moveToFirst()){
+            while (!result.isAfterLast()) {
+                String familyNameKrGot = result.getString(1).toString();
+                String familyNameCh = result.getString(2).toString();
+                String familyNameMean = result.getString(3).toString();
+                Letter familyNameLetter = new Letter(familyNameKrGot, familyNameCh, familyNameMean);
+                resultArrayList.add(familyNameLetter);
+                result.moveToNext();
+            }
+        }
+        result.close();
+        return  resultArrayList;
+    }
+
     public Letter getLetterFromCh(String familyNameCh, int type) {
         String sql = "select * from " + DB_CH_TABLE_NAME + " where Hanja = '"+ familyNameCh+"' and Position = " + type +";";
         Letter familyNameLetter = new Letter();
@@ -189,6 +211,24 @@ public class DBManager {
         }
         result.close();
         return  familyNameLetter;
+    }
+
+    public String[] getSajuYearMonthDay(String birthYear, String birthMonth, String birthDay) {
+        int year = new Integer(birthYear);
+        String[] returnStringArray = new String[4];
+
+        //String sql = "select * from " + DB_MANSE_TABLE_NAME + " where cd_sy = '"+ familyNameCh+"' and cd_sm = " + type +";";
+        String sql = "select * from " + DB_MANSE_TABLE_NAME + " where cd_sy = "+ year +" and cd_sm = '" + birthMonth + "' and cd_sd = '" + birthDay +"';";
+        Cursor result = db_manse.rawQuery(sql, null);
+
+        // result(Cursor 객체)가 비어 있으면 false 리턴
+        if(result.moveToFirst()){
+            returnStringArray[0] = result.getString(9);
+            returnStringArray[1] = result.getString(11);
+            returnStringArray[2] = result.getString(13);
+        }
+        result.close();
+        return returnStringArray;
     }
 
     public ArrayList<String> getNamesFullList(int name_len) {
