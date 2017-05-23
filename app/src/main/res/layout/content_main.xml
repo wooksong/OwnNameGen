@@ -185,7 +185,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="2"
                     android:gravity="center_vertical|center_horizontal"
-                    android:text="@string/NameType1" />
+                    android:text="@string/NameType1"
+                    android:enabled="false"/>
                 <RadioButton
                     android:id="@+id/nametypeRB2"
                     android:layout_width="match_parent"

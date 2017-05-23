@@ -289,8 +289,8 @@ public class MainActivity extends AppCompatActivity {
             birth_TimeButton.setClickable(flag);
             birth_LocationButton.setEnabled(flag);
             birth_LocationButton.setClickable(flag);
-            nametype_RadioButton1.setClickable(flag);
-            nametype_RadioButton1.setEnabled(flag);
+            nametype_RadioButton1.setClickable(false);
+            nametype_RadioButton1.setEnabled(false);
             nametype_RadioButton2.setClickable(flag);
             nametype_RadioButton2.setEnabled(flag);
             proOptionApply_CB.setEnabled(flag);

@@ -18,5 +18,19 @@
     <string name="ProOptionFiveEle_firstOrlast">오행 상생 평가 모두 포함</string>
     <string name="SajuFiveEleTitle">사주오행</string>
     <string name="ResultChNamesTitle">가능한 한문 이름 조합</string>
+    <string name="ChOptionTitle">한자 이름 조합 옵션</string>
+    <string name="HanjaSuri81">81수리 분석 적용</string>
+    <string name="HanjaSuriFiveEleTitle">수리오행 적용</string>
+    <string name="HanjaSuriYinYangTitle">수리음양 적용</string>
+    <string name="HanjaSajuFiveEleTitle">사주오행 평가 적용</string>
+    <string name="HanjaSummaryTitle">이름 한자 풀이</string>
+    <string name="BirthSummaryTitle">생년월일시(生年月日時) 풀이</string>
+    <string name="SajuFiveEleSummaryTitle">사주오행 풀이</string>
+    <string name="Suri81SummaryTitle">81수리 분석</string>
+
+
+
+
+
 </resources>
 

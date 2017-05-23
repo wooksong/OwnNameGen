@@ -20,11 +20,25 @@
         android:visibility="visible"
         app:layout_constraintLeft_toRightOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        tools:layout_editor_absoluteY="8dp">
+        tools:layout_editor_absoluteY="8dp"
+        >
 
         <TableLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" >
+
+                <ProgressBar
+                    android:id="@+id/progressBarCh"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical|center_horizontal"
+                    android:layout_weight="1"/>
+            </TableRow>
 
             <TableRow
                 android:layout_width="match_parent"
@@ -156,12 +170,78 @@
                     android:layout_weight="1"
                     android:layout_height="180dp" />
             </TableRow>
-
-            <TableRow
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
         </TableLayout>
 
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            >
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#FFFFFF">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical|center_horizontal"
+                android:layout_weight="1" />
+
+        </TableRow>
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#3F51B5">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center_vertical|center_horizontal"
+                android:text="@string/ChOptionTitle"
+                android:textColor="#FFFFFF" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <CheckBox
+                android:id="@+id/hanja_suri_81"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/HanjaSuri81" />
+        </TableRow>
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <CheckBox
+                android:id="@+id/hanja_suri_five_ele"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/HanjaSuriFiveEleTitle" />
+        </TableRow>
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+                <CheckBox
+                    android:id="@+id/hanja_suri_yinyang"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/HanjaSuriYinYangTitle" />
+            </TableRow>
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+                <CheckBox
+                    android:id="@+id/hanja_saju_five_ele"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/HanjaSajuFiveEleTitle"/>
+            </TableRow>
+        </TableLayout>
     </LinearLayout>
 
 

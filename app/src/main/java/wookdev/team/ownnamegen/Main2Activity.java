@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -18,9 +19,12 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
@@ -30,8 +34,11 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.TimeZone;
 
 
@@ -39,6 +46,29 @@ import static java.util.Calendar.MONDAY;
 
 public class Main2Activity extends AppCompatActivity {
     private static final String TAG = "Main2Activity";
+
+    public static final String EXTRA_KEY_BIRTH_YEAR = "birth_year";
+    public static final String EXTRA_KEY_BIRTH_MONTH = "birth_month";
+    public static final String EXTRA_KEY_BIRTH_DAY = "birth_day";
+    public static final String EXTRA_KEY_BIRTH_HOUR = "birth_hour";
+    public static final String EXTRA_KEY_BIRTH_MINUTE = "birth_minute";
+    public static final String EXTRA_KEY_BIRTH_DATE = "birth_date";
+    public static final String EXTRA_KEY_BIRTH_SAJU = "birth_saju";
+    public static final String EXTRA_KEY_FULL_KR_NAME = "full_name_kr";
+    public static final String EXTRA_KEY_FULL_CH_NAME = "full_name_ch";
+    public static final String EXTRA_KEY_FULL_NAME_LEN = "full_name_len";
+
+    public static final String EXTRA_KEY_FIVE_ELE_TREE = "five_ele_tree";
+    public static final String EXTRA_KEY_FIVE_ELE_FIRE = "five_ele_fire";
+    public static final String EXTRA_KEY_FIVE_ELE_SOIL = "five_ele_soil";
+    public static final String EXTRA_KEY_FIVE_ELE_METAL = "five_ele_metal";
+    public static final String EXTRA_KEY_FIVE_ELE_WATER = "five_ele_water";
+    public static final String EXTRA_KEY_SURI_FOUR_FORM_WON = "suri_four_form_won";
+    public static final String EXTRA_KEY_SURI_FOUR_FORM_HYUNG = "suri_four_form_hyung";
+    public static final String EXTRA_KEY_SURI_FOUR_FORM_EE = "suri_four_form_ee";
+    public static final String EXTRA_KEY_SURI_FOUR_FORM_JEONG = "suri_four_form_jeong";
+
+
     private static final int FIVE_ELE_TREE = 0;
     private static final int FIVE_ELE_FIRE = 1;
     private static final int FIVE_ELE_SOIL = 2;
@@ -49,11 +79,13 @@ public class Main2Activity extends AppCompatActivity {
     private static final String FIVE_ELE_SOIL_KR = "토";
     private static final String FIVE_ELE_METAL_KR = "금";
     private static final String FIVE_ELE_WATER_KR = "수";
-
     private static final int FAMILY_NAME_IDX = 0;
     private static final int MIDDLE_NAME_IDX = 1;
     private static final int LAST_NAME_IDX = 2;
-
+    private static final int FOUR_FORM_SURI_WON_IDX = 0;
+    private static final int FOUR_FORM_SURI_HYUNG_IDX = 1;
+    private static final int FOUR_FORM_SURI_EE_IDX = 2;
+    private static final int FOUR_FORM_SURI_JEONG_IDX = 3;
 
 
     private String fullNameKr;
@@ -81,7 +113,11 @@ public class Main2Activity extends AppCompatActivity {
 
     private DBManager dbManager;
     private ArrayList<ArrayList<Letter>> nameCandidatesLetters;
-    private String[] nameCandidatesListMenu;
+    private ArrayList<ArrayList<Letter>> nameAppliedCandidatesLetters;
+
+    //private String[] nameCandidatesListMenu;
+    private ArrayList<String> nameCandidatesListMenu;
+
     private ArrayAdapter nameCandidatesListMenuAdapter;
 
     private TextView TV_TitleKrName;
@@ -93,6 +129,28 @@ public class Main2Activity extends AppCompatActivity {
 
     private TextView TV_ResultChNames;
     private ListView LV_ResultChNames;
+
+    private ProgressBar mainProgressBar;
+    private CheckBox CB_HanjaSuri81;
+    private CheckBox CB_HanjaSuriFiveEle;
+    private CheckBox CB_HanjaSuriYinYang;
+    private CheckBox CB_HanjaSajuFiveEle;
+
+    private boolean is_applied_haja_suri_81 = false;
+    private boolean is_applied_hanja_suri_five_ele = false;
+    private boolean is_applied_hanja_suri_yinyang = false;
+    private boolean is_applied_hanja_saju_five_ele = false;
+
+    private void controlUI(boolean flag) {
+        CB_HanjaSuri81.setEnabled(flag);
+        CB_HanjaSuri81.setChecked(is_applied_haja_suri_81);
+        CB_HanjaSuriFiveEle.setEnabled(flag);
+        CB_HanjaSuriFiveEle.setChecked(is_applied_hanja_suri_five_ele);
+        CB_HanjaSuriYinYang.setEnabled(flag);
+        CB_HanjaSuriYinYang.setChecked(is_applied_hanja_suri_yinyang);
+        CB_HanjaSajuFiveEle.setEnabled(flag);
+        CB_HanjaSajuFiveEle.setChecked(is_applied_hanja_saju_five_ele);
+    }
 
     private void initSajuFiveEleTVs() {
         TV_FiveEleTree = (TextView) findViewById(R.id.TV_FiveEleTree);
@@ -106,6 +164,47 @@ public class Main2Activity extends AppCompatActivity {
         TV_FiveEleSoil.setText(FIVE_ELE_SOIL_KR + ": " + saju_five_ele_soil);
         TV_FiveEleMetal.setText(FIVE_ELE_METAL_KR + ": " + saju_five_ele_metal);
         TV_FiveEleWater.setText(FIVE_ELE_WATER_KR + ": " + saju_five_ele_water);
+    }
+
+    private void initHanjaNameOptionCBs() {
+        CB_HanjaSuri81 = (CheckBox) findViewById(R.id.hanja_suri_81);
+        CB_HanjaSuri81.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                is_applied_haja_suri_81 =isChecked;
+                MakeNamesAsyncTask doMakeNamesAsyncTask = new MakeNamesAsyncTask();
+                doMakeNamesAsyncTask.execute();
+            }
+        });
+        CB_HanjaSuriFiveEle = (CheckBox) findViewById(R.id.hanja_suri_five_ele);
+        CB_HanjaSuriFiveEle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                is_applied_hanja_suri_five_ele = isChecked;
+                MakeNamesAsyncTask doMakeNamesAsyncTask = new MakeNamesAsyncTask();
+                doMakeNamesAsyncTask.execute();
+            }
+        });
+        CB_HanjaSuriYinYang = (CheckBox) findViewById(R.id.hanja_suri_yinyang);
+        CB_HanjaSuriYinYang.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                is_applied_hanja_suri_yinyang = isChecked;
+                MakeNamesAsyncTask doMakeNamesAsyncTask = new MakeNamesAsyncTask();
+                doMakeNamesAsyncTask.execute();
+            }
+        });
+        CB_HanjaSajuFiveEle = (CheckBox) findViewById(R.id.hanja_saju_five_ele);
+        CB_HanjaSajuFiveEle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                is_applied_hanja_saju_five_ele = isChecked;
+                MakeNamesAsyncTask doMakeNamesAsyncTask = new MakeNamesAsyncTask();
+                doMakeNamesAsyncTask.execute();
+            }
+        });
+
+
     }
 
     private static final int UNBOUNDED = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
@@ -142,16 +241,17 @@ public class Main2Activity extends AppCompatActivity {
 
 
     private void initResultLV() {
-
-        nameCandidatesListMenu = new String[nameCandidatesLetters.size()];
-        for (int i = 0; i < nameCandidatesListMenu.length; i++) {
-            nameCandidatesListMenu[i] = "[ " +nameCandidatesLetters.get(i).get(MIDDLE_NAME_IDX).getMean() + " ] "
+        nameAppliedCandidatesLetters = new ArrayList<ArrayList<Letter>>();
+        nameCandidatesListMenu = new ArrayList<String>();
+        for (int i = 0; i < nameCandidatesLetters.size(); i++) {
+            nameCandidatesListMenu.add(i, "[ " +nameCandidatesLetters.get(i).get(MIDDLE_NAME_IDX).getMean() + " ] "
                     + nameCandidatesLetters.get(i).get(MIDDLE_NAME_IDX).getChLetter()
                     + " [ " + nameCandidatesLetters.get(i).get(LAST_NAME_IDX).getMean() + " ] "
-                    + nameCandidatesLetters.get(i).get(LAST_NAME_IDX).getChLetter();
+                    + nameCandidatesLetters.get(i).get(LAST_NAME_IDX).getChLetter());
+            nameAppliedCandidatesLetters.add(i, nameCandidatesLetters.get(i));
         }
 
-        nameCandidatesListMenuAdapter = new ArrayAdapter(this, R.layout.simplerow, nameCandidatesListMenu);
+        nameCandidatesListMenuAdapter = new ArrayAdapter<String>(this, R.layout.simplerow, nameCandidatesListMenu);
         nameCandidatesListMenuAdapter.setNotifyOnChange(true);
 
         LV_ResultChNames = (ListView) findViewById(R.id.LV_ResultChNames);
@@ -160,7 +260,69 @@ public class Main2Activity extends AppCompatActivity {
         LV_ResultChNames.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                ArrayList<Letter> finalChoice = nameAppliedCandidatesLetters.get(position);
+                String krName = new String();
+                String chName = new String();
+                for(int i = 0; i < finalChoice.size(); i++) {
+                    Log.d(TAG, "i = " + i + " " +finalChoice.get(i).getChLetter());
+                    krName = krName + finalChoice.get(i).getKrLetter();
+                    chName = chName + finalChoice.get(i).getChLetter();
+                }
+                Intent intent = new Intent(Main2Activity.this, PopUpActivity.class);
+                intent.putExtra(EXTRA_KEY_FULL_CH_NAME, chName);
+                intent.putExtra(EXTRA_KEY_FULL_KR_NAME, krName);
+                intent.putExtra(EXTRA_KEY_FULL_NAME_LEN, fullNameLen);
+                String birthDate = birthYear + "년 " + birthMonth + "월 " + birthDay + "일 ";
+                if (Integer.parseInt(birthHour) < 10)
+                    birthDate = birthDate + "0" + birthHour + "시 ";
+                else
+                    birthDate = birthDate + birthHour + "시 ";
+                if (Integer.parseInt(birthMinute) < 10)
+                    birthDate = birthDate + "0" + birthMinute + "분 ";
+                else
+                    birthDate = birthDate + birthMinute + "분 ";
 
+                intent.putExtra(EXTRA_KEY_BIRTH_DATE, birthDate);
+                intent.putExtra(EXTRA_KEY_BIRTH_SAJU, saju[0] + "년 " + saju[1] +
+                        "월 " + saju[2] + "일 " + saju[3]  + "시");
+
+                int saju_five_ele_tree_local = saju_five_ele_tree;
+                int saju_five_ele_fire_local = saju_five_ele_fire;
+                int saju_five_ele_soil_local = saju_five_ele_soil;
+                int saju_five_ele_metal_local = saju_five_ele_metal;
+                int saju_five_ele_water_local = saju_five_ele_water;
+
+                for (int j = 1; j < finalChoice.size(); j++) {
+                    Letter eachLetter = finalChoice.get(j);
+                    if (eachLetter.getRadFiveElement().equals("木")) {
+                        saju_five_ele_tree_local++;
+                    } else if (eachLetter.getRadFiveElement().equals("火")) {
+                        saju_five_ele_fire_local++;
+                    } else if (eachLetter.getRadFiveElement().equals("土")) {
+                        saju_five_ele_soil_local++;
+                    } else if (eachLetter.getRadFiveElement().equals("金")) {
+                        saju_five_ele_metal_local++;
+                    } else if (eachLetter.getRadFiveElement().equals("水")) {
+                        saju_five_ele_water_local++;
+                    }
+                }
+                intent.putExtra(EXTRA_KEY_FIVE_ELE_TREE, saju_five_ele_tree_local);
+                intent.putExtra(EXTRA_KEY_FIVE_ELE_FIRE, saju_five_ele_fire_local);
+                intent.putExtra(EXTRA_KEY_FIVE_ELE_SOIL, saju_five_ele_soil_local);
+                intent.putExtra(EXTRA_KEY_FIVE_ELE_METAL, saju_five_ele_metal_local);
+                intent.putExtra(EXTRA_KEY_FIVE_ELE_WATER, saju_five_ele_water_local);
+
+                ArrayList<Integer> fourFormSuri = getFourFormSuri(finalChoice);
+                intent.putExtra(EXTRA_KEY_SURI_FOUR_FORM_WON, dbManager.getSuri(fourFormSuri.get(FOUR_FORM_SURI_WON_IDX)).getSuri());
+                intent.putExtra(EXTRA_KEY_SURI_FOUR_FORM_HYUNG, dbManager.getSuri(fourFormSuri.get(FOUR_FORM_SURI_HYUNG_IDX)).getSuri());
+                intent.putExtra(EXTRA_KEY_SURI_FOUR_FORM_EE, dbManager.getSuri(fourFormSuri.get(FOUR_FORM_SURI_EE_IDX)).getSuri());
+                intent.putExtra(EXTRA_KEY_SURI_FOUR_FORM_JEONG, dbManager.getSuri(fourFormSuri.get(FOUR_FORM_SURI_JEONG_IDX)).getSuri());
+
+                startActivity(intent);
+                /*
+                MakeNamesAsyncTask doMakeNamesAsyncTask = new MakeNamesAsyncTask();
+                doMakeNamesAsyncTask.execute();
+                */
             }
         });
 
@@ -191,7 +353,6 @@ public class Main2Activity extends AppCompatActivity {
         return afterAddingMins;
     }
     private String getOldTime(int hour) {
-        Log.d(TAG, " " + hour);
         if ((hour >= 23) && (hour < 1))
             return "자";
         else if ((hour >=1) && (hour <3))
@@ -219,7 +380,6 @@ public class Main2Activity extends AppCompatActivity {
     }
 
     private String getSajuTime(String day, String time) {
-        Log.d(TAG, "day = " + day + " time = " + time);
         if (day.equals("갑") || day.equals("기")) {
             if (time.equals("자")) {
                 return "갑자";
@@ -445,7 +605,9 @@ public class Main2Activity extends AppCompatActivity {
                 curDate.get(Calendar.DATE)+"");
 
         saju[3] = getSajuTime(saju[2].charAt(0) + "", getOldTime(curDate.get(Calendar.HOUR_OF_DAY)));
+        /*
         Log.d(TAG, saju[0] + " " + saju[1] + " " + saju[2] + " " +saju[3]);
+        */
         setSajuFiveEleSelf();
     }
 
@@ -476,17 +638,18 @@ public class Main2Activity extends AppCompatActivity {
             for (int j = 0; j < lastName.size(); j++) {
                 ArrayList<Letter> name = new ArrayList<Letter>();
                 name.add(FAMILY_NAME_IDX, famlilyNameLetter);
-                name.add(MIDDLE_NAME_IDX, middleName.get(i));
-                name.add(LAST_NAME_IDX, lastName.get(j));
+                name.add(MIDDLE_NAME_IDX, dbManager.getLetterFromCh(middleName.get(i).getChLetter(), DBManager.TYPE_NORMAL_NAME));
+                name.add(LAST_NAME_IDX, dbManager.getLetterFromCh(lastName.get(j).getChLetter(), DBManager.TYPE_NORMAL_NAME));
                 nameCandidatesLetters.add(name);
             }
         }
-
+        /*
         for (int i = 0; i < nameCandidatesLetters.size(); i++) {
             Log.d(TAG, nameCandidatesLetters.get(i).get(FAMILY_NAME_IDX).getChLetter()
                     + nameCandidatesLetters.get(i).get(MIDDLE_NAME_IDX).getChLetter()
                     + nameCandidatesLetters.get(i).get(LAST_NAME_IDX).getChLetter());
         }
+        */
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -495,6 +658,7 @@ public class Main2Activity extends AppCompatActivity {
 
         Intent intent = getIntent();
         dbManager = new DBManager(this);;
+        mainProgressBar = (ProgressBar) findViewById(R.id.progressBarCh);
 
         /*
         this.famlilyNameLetter = dbManager.getLetterFromCh(intent.getStringExtra(MainActivity.EXTRA_KEY_CH_FAMILY_NAME), DBManager.TYPE_FAMILY_NAME);
@@ -516,6 +680,279 @@ public class Main2Activity extends AppCompatActivity {
 
         initResultLV();
 
-        Log.d(TAG, this.fullNameLen + ":" + fullNameKr + ":" + famlilyNameLetter.getChLetter() + ":" + this.nameCandidatesLetters);
+        initHanjaNameOptionCBs();
+
+        //Log.d(TAG, this.fullNameLen + ":" + fullNameKr + ":" + famlilyNameLetter.getChLetter() + ":" + this.nameCandidatesLetters);
     }
+
+    private ArrayList<Integer> getFourFormSuri(ArrayList<Letter> name) {
+        Letter familyNameLetter = name.get(FAMILY_NAME_IDX);
+        Letter firstNameLetter = name.get(FAMILY_NAME_IDX+1);
+        Letter lastNameLetter = name.get(LAST_NAME_IDX);
+
+        ArrayList<Integer> result = new ArrayList<Integer>(FOUR_FORM_SURI_JEONG_IDX + 1);
+        /*
+        Log.d(TAG, familyNameLetter.getChLetter() + " familyNameLetter.getStroke() = " + familyNameLetter.getStroke());
+        Log.d(TAG, firstNameLetter.getChLetter() + " firstNameLetter.getStroke() = " + firstNameLetter.getStroke());
+        Log.d(TAG, lastNameLetter.getChLetter() + " lastNameLetter.getStroke() = " + lastNameLetter.getStroke());
+        */
+        result.add(FOUR_FORM_SURI_WON_IDX, (firstNameLetter.getStroke() + lastNameLetter.getStroke()));
+        result.add(FOUR_FORM_SURI_HYUNG_IDX, (familyNameLetter.getStroke() + firstNameLetter.getStroke()));
+        result.add(FOUR_FORM_SURI_EE_IDX, (familyNameLetter.getStroke() + lastNameLetter.getStroke()));
+        result.add(FOUR_FORM_SURI_JEONG_IDX, (familyNameLetter.getStroke() + firstNameLetter.getStroke() + lastNameLetter.getStroke()));
+
+        /*
+        for (int i = 0; i < result.size(); i++) {
+            Log.d(TAG, " FOUR FORM " + i + " " + result.get(i));
+        }
+        */
+
+        return result;
+    }
+
+    class MakeNamesAsyncTask extends AsyncTask<Integer, Integer, Integer> {
+        @Override
+        protected void onPreExecute() {
+            //controlKrUI(false);
+            nameCandidatesListMenu.clear();
+            mainProgressBar.setMax(100);
+            controlUI(false);
+
+            super.onPreExecute();
+        }
+
+        @Override
+        protected Integer doInBackground(Integer... integers) {
+            nameAppliedCandidatesLetters = new ArrayList<ArrayList<Letter>>();
+            int cnt = 0;
+            for (int i = 0; i < nameCandidatesLetters.size(); i++) {
+                boolean is_needed_to_add = true;
+                ArrayList<Letter> nameCandidates = nameCandidatesLetters.get(i);
+
+                /*
+                for (int j = 0; j < nameCandidates.size(); j++) {
+                    Log.d(TAG, nameCandidates.get(j).getKrLetter() + " " + nameCandidates.get(j).getChLetter());
+                }
+                */
+                ArrayList<Integer> fourFormSuri = getFourFormSuri(nameCandidates);
+                if (is_applied_haja_suri_81) {
+                    for (int j = 0; j < fourFormSuri.size(); j++) {
+                        Suri81 eachSuri = dbManager.getSuri(fourFormSuri.get(j));
+                        if (!eachSuri.getEvaluation().equals(Suri81.EVAL_GOOD))
+                            is_needed_to_add = is_needed_to_add && false;
+                    }
+                }
+                if (is_applied_hanja_suri_five_ele) {
+                    ArrayList<Integer> name_five_eles_value = new ArrayList<Integer>();
+                    ArrayList<Integer> name_five_eles = new ArrayList<Integer>();
+                    name_five_eles_value.add(FAMILY_NAME_IDX, fourFormSuri.get(FOUR_FORM_SURI_EE_IDX)%10);
+                    name_five_eles_value.add(MIDDLE_NAME_IDX, fourFormSuri.get(FOUR_FORM_SURI_HYUNG_IDX)%10);
+                    name_five_eles_value.add(LAST_NAME_IDX, fourFormSuri.get(FOUR_FORM_SURI_WON_IDX)%10);
+
+                    for (int j = 0; j < name_five_eles_value.size(); j++) {
+                        if ((name_five_eles_value.get(j) == 1) || (name_five_eles_value.get(j) == 2)) {
+                            name_five_eles.add(j, FIVE_ELE_TREE);
+                        } else if ((name_five_eles_value.get(j) == 3) || (name_five_eles_value.get(j) == 4)) {
+                            name_five_eles.add(j, FIVE_ELE_FIRE);
+                        } else if ((name_five_eles_value.get(j) == 5) || (name_five_eles_value.get(j) == 6)) {
+                            name_five_eles.add(j, FIVE_ELE_SOIL);
+                        } else if ((name_five_eles_value.get(j) == 7) || (name_five_eles_value.get(j) == 8)) {
+                            name_five_eles.add(j, FIVE_ELE_METAL);
+                        } else if((name_five_eles_value.get(j) == 9) || (name_five_eles_value.get(j) == 0)) {
+                            name_five_eles.add(j, FIVE_ELE_WATER);
+                        }
+                    }
+                    int cnt_best = 0;
+                    int cnt_bad = 0;
+                    for (int j = 0; j < name_five_eles.size() - 1; j++) {
+                        int cur_ele = name_five_eles.get(j);
+                        int next_ele = name_five_eles.get(j+1);
+                        if (cur_ele == FIVE_ELE_TREE) {
+                            if ((next_ele == FIVE_ELE_FIRE) || (next_ele == FIVE_ELE_WATER)) {
+                                cnt_best++;
+                            } else {
+                                cnt_bad++;
+                            }
+                        } else {
+                            int res = (next_ele - cur_ele);
+                            if ((res == -1) || (res == 1))
+                                cnt_best++;
+                            else if (res == 0)
+                                ;
+                            else
+                                cnt_bad++;
+                        }
+                    }
+
+                    if (!((cnt_best > 0) && (cnt_bad == 0))) {
+                        is_needed_to_add = is_needed_to_add && false;
+                    }
+                }
+                if (is_applied_hanja_suri_yinyang) {
+                    int cnt_yin = 0;
+                    int cnt_yang = 0;
+                    for (int j = 0; j < nameCandidates.size(); j++) {
+                        if ((nameCandidates.get(j).getStroke() % 2) == 0){
+                            cnt_yin++;
+                        } else {
+                            cnt_yang++;
+                        }
+                    }
+                    if ((cnt_yin == 0) || (cnt_yang ==0)) {
+                        is_needed_to_add = is_needed_to_add && false;
+                    }
+                }
+
+                if (is_applied_hanja_saju_five_ele) {
+                    int saju_five_ele_tree_local = saju_five_ele_tree;
+                    int saju_five_ele_fire_local = saju_five_ele_fire;
+                    int saju_five_ele_soil_local = saju_five_ele_soil;
+                    int saju_five_ele_metal_local = saju_five_ele_metal;
+                    int saju_five_ele_water_local = saju_five_ele_water;
+
+                    for (int j = 1; j < nameCandidates.size(); j++) {
+                        Letter eachLetter = nameCandidates.get(j);
+                        if (eachLetter.getRadFiveElement().equals("木")) {
+                            saju_five_ele_tree_local++;
+                        } else if (eachLetter.getRadFiveElement().equals("火")) {
+                            saju_five_ele_fire_local++;
+                        } else if (eachLetter.getRadFiveElement().equals("土")) {
+                            saju_five_ele_soil_local++;
+                        } else if (eachLetter.getRadFiveElement().equals("金")) {
+                            saju_five_ele_metal_local++;
+                        } else if (eachLetter.getRadFiveElement().equals("水")) {
+                            saju_five_ele_water_local++;
+                        }
+                    }
+
+                    if ((saju_five_ele_tree_local == 0) ||
+                            (saju_five_ele_fire_local == 0) ||
+                            (saju_five_ele_soil_local == 0) ||
+                            (saju_five_ele_metal_local == 0) ||
+                            (saju_five_ele_water_local == 0)) {
+                        is_needed_to_add = is_needed_to_add && false;
+                    }
+                }
+                    if (is_needed_to_add) {
+                    nameCandidatesListMenu.add("[ " + nameCandidatesLetters.get(i).get(MIDDLE_NAME_IDX).getMean() + " ] "
+                            + nameCandidatesLetters.get(i).get(MIDDLE_NAME_IDX).getChLetter()
+                            + " [ " + nameCandidatesLetters.get(i).get(LAST_NAME_IDX).getMean() + " ] "
+                            + nameCandidatesLetters.get(i).get(LAST_NAME_IDX).getChLetter());
+                    nameAppliedCandidatesLetters.add(nameCandidates);
+                }
+            }
+            /*
+            String name = new String();
+            int past_progress = 0;
+            int cur_progress;
+            publishProgress(past_progress);
+            String[] namesAppliedArray = new String[namesFullList.size()];
+
+            if (ownName.isEmpty())
+                return 0;
+
+            if (pro_option_apply == false) {
+                namesAppliedList.addAll(namesFullList);
+            }
+
+            name = name + ownName.get(POS_FAMILY_NAME).getKrLetter();
+
+            for (int i = 0; i < namesFullList.size(); i++) {
+                String eachName = name + namesFullList.get(i);
+                Boolean addFlag = true;
+                int result;
+
+                if (pro_option_yinyang) {
+                    result = evaluate_pro_yy(eachName);
+                    if (result == PRO_YY_ELE_BEST) {
+                        addFlag &= true;
+                        //namesAppliedList.add(eachName);
+                    } else {
+                        addFlag &= false;
+                    }
+                }
+
+                if (pro_option_five_ele_first) {
+                    result = evaluate_pro_five_ele_best_first_only(eachName);
+                    if (result == PRO_FIVE_ELE_BEST) {
+                        addFlag &= true;
+                    } else {
+                        addFlag &= false;
+                    }
+                } else if (pro_option_five_ele_firstlast) {
+                    result = evaluate_pro_five_ele_best_firstlast_only(eachName);
+                    if (result == PRO_FIVE_ELE_BEST) {
+                        addFlag &= true;
+                    } else {
+                        addFlag &= false;
+                    }
+                } else if (pro_option_five_ele_firstorlast) {
+                    if ((evaluate_pro_five_ele_best_first_only(eachName) == PRO_FIVE_ELE_BEST) ||
+                            (evaluate_pro_five_ele_best_firstlast_only(eachName) == PRO_FIVE_ELE_BEST)) {
+                        addFlag &= true;
+                    } else {
+                        addFlag &= false;
+                    }
+                }
+                */
+                /* Progress Bar */
+                /*
+                if (addFlag)
+                    namesAppliedList.add(namesFullList.get(i));
+
+                cur_progress = i * 100 / namesFullList.size();
+
+                if (cur_progress > past_progress) {
+                    past_progress = cur_progress;
+                    publishProgress(Integer.valueOf(past_progress));
+                }
+
+            }*/
+            return 0;
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... params) {
+            //krProgressBar.setProgress(params[0].intValue());
+            //Log.d(TAG, "i = " + params[0]);
+        }
+
+        @Override
+        protected void onPostExecute(Integer result) {
+            nameCandidatesListMenuAdapter.notifyDataSetChanged();
+            TV_ResultChNames.setText(getString(R.string.ResultChNamesTitle) + ": " + nameCandidatesListMenu.size());
+            controlUI(true);
+            /*
+            controlKrUI(true);
+            if(!namesAppliedList.isEmpty()) {
+
+                Set<String> hs = new HashSet<String>();
+                hs.addAll((ArrayList<String>) namesAppliedList.clone());
+                namesAppliedList.clear();
+                namesAppliedList.addAll(hs);
+            }
+
+            Log.d(TAG, "possible names = " + namesAppliedList.size());
+            resultCntsTV.setText("가능한 이름 조합의 수: " +  namesAppliedList.size());
+            */
+            super.onPostExecute(result);
+
+        }
+    }
+    /*
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(requestCode==1){
+            if(resultCode==RESULT_OK){
+                //데이터 받기
+                String result = data.getStringExtra("result");
+            }
+        }
+    }*/
+
+
+
 }
+
+
+
